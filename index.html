@@ -7,7 +7,8 @@
     <title>Document</title>
     <link rel="stylesheet" href="./style.css">
 </head>
-<body><div class="main">
+<body>
+  <div class="main">
 
     <form action="" method="POST" class="form" id="form-1">
       <h3 class="heading">Thành viên đăng ký</h3>
@@ -43,13 +44,18 @@
     </form>
   
   </div>
+
   <script src="./valildator.js"></script>
+  <!-- <script src="./practice.js"></script> -->
   <script>
     Validator({
       form: '#form-1',
+      errorMesageSelector: '.form-message',
       rules: [
         Validator.isRequired('#fullname'),
         Validator.isEmail('#email'),
+        // Validator.isRequired('#password'),
+        // Validator.minLength('#password', 6)
       ]
     })
   </script>
