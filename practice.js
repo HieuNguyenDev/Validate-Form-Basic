@@ -1,65 +1,114 @@
-const $ = document.querySelector.bind(document)
+function Validator (options) {
+    var formElement = document.querySelector(options.form)
+    var selectorRules = {}
 
-function Validator(options) {
-    var formElement = $(options.form)
+    // Submit form
+    if (formElement) {
+        formElement.onsubmit = (e) => {
+            var isFormValid = true
+            e.preventDefault()
+            options.rules.forEach(rule => {
+                var inputElement = formElement.querySelector(rule.selector)
+                var isInvalid = validate(inputElement, rule)
 
-    function validate(inputElement, rule) {
-        var errorElement = inputElement.parentElement.querySelector(options.errorMesageSelector)
-        var errorMessage = rule.test(inputElement.value)
-        if (errorMessage) {
-            errorElement.innerText = errorMessage
-            inputElement.parentElement.classList.add('invalid')
-        } else {
-            errorElement.innerText = ''
-            inputElement.parentElement.classList.remove('invalid')
+                if (isInvalid) {
+                    isFormValid = false
+                }
+            })
+
+            if (isFormValid) {
+                if (typeof options.onSubmit === 'function') {
+                    var enableInputs = formElement.querySelectorAll('[name]:not([disabled])')
+                    var formValues = Array.from(enableInputs).reduce((values, input) => {
+                        return (values[input.name] = input.value) && values
+                    }, {})
+                    options.onSubmit(formValues)
+                } else {
+                    formElement.submit()
+                }
+            }
         }
     }
-    
+
+    function validate (inputElement, rule) {
+        var errorElement = inputElement.parentElement.querySelector('.form-message')
+        var rules = selectorRules[rule.selector]
+        var errorMessage
+        
+        for (let i = 0; i < rules.length; i++) {
+            errorMessage = rules[i](inputElement.value)
+            if (errorMessage) break;
+        }
+
+        if (errorMessage) {
+            inputElement.parentElement.classList.add('invalid')
+            errorElement.innerText = errorMessage
+        } else {
+            inputElement.parentElement.classList.remove('invalid')
+            errorElement.innerText = ''
+        }
+
+        return !!errorMessage
+    }
+
     if (formElement) {
         options.rules.forEach(rule => {
             var inputElement = formElement.querySelector(rule.selector)
+            var errorElement = inputElement.parentElement.querySelector('.form-message')
 
-            if (inputElement) {
-                var errorElement = inputElement.parentElement.querySelector(options.errorMesageSelector)
-                inputElement.onblur = () => {
-                    validate(inputElement, rule)
-                }
+            if (Array.isArray(selectorRules[rule.selector])) {
+                selectorRules[rule.selector].push(rule.test)
+            } else {
+                selectorRules[rule.selector] = [rule.test]
+            }
+            
+            inputElement.onblur = () => {
+                validate(inputElement, rule)
+            }
 
-                inputElement.oninput = () => {
-                    errorElement.innerText = ''
-                    inputElement.parentElement.classList.remove('invalid')
-                }
+            inputElement.oninput = () => {
+                inputElement.parentElement.classList.remove('invalid')
+                errorElement.innerText = ''
+
             }
         })
+        console.log(selectorRules);
     }
 }
 
-// Nếu không có inputValue thì trả ra message lỗi
-// Nếu hợp lệ thì trả về undefined
-Validator.isRequired = (selector) => {
+Validator.isRequired = (selector, message) => {
     return {
         selector,
         test(value) {
-            return value.trim() ? undefined : 'Không được để trống'
+            return value.trim() ? undefined : message || 'Không được để trống'
         }
     }
 }
 
-Validator.isEmail = (selector) => {
+Validator.isEmail = (selector, message) => {
     return {
         selector,
         test(value) {
-            var emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-            return emailRegex.test(value) ? undefined : 'Trường này phải là email'
+            var regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+            return regex.test(value) ? undefined : message || 'Trường này phải là email'
         }
     }
 }
 
-Validator.minLength = (selector, min) => {
+Validator.minLength = (selector, min, message) => {
     return {
         selector,
         test(value) {
-            return value.length >= min ? undefined : `Mật khẩu ít nhất ${min} ký tự`
+            return value.length >= min ? undefined : message || `Mật khẩu ít nhất ${min} ký tự `
+        }
+    }
+}
+
+Validator.isConfirmed = (selector, getConfirmValue, message) => {
+    return {
+        selector,
+        test(value) {
+            return value === getConfirmValue() ? undefined : message || 'Không trùng khớp'
         }
     }
 }

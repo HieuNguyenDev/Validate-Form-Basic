@@ -45,9 +45,8 @@
   
   </div>
 
-  <script src="./valildator.js"></script>
-  <!-- <script src="./practice.js"></script> -->
-  <script>
+  <!-- <script src="./valildator.js"></script> -->
+  <!-- <script>
     Validator({
       form: '#form-1',
       errorMesageSelector: '.form-message',
@@ -65,6 +64,27 @@
       onSubmit(data) {
         console.log(data);
       }
+    })
+  </script> -->
+
+  <script src="./practice.js"></script>
+  <script>
+    Validator({
+      form: '#form-1',
+      rules: [
+        Validator.isRequired('#fullname'),
+        Validator.isRequired('#email'),
+        Validator.isEmail('#email'),
+        Validator.isRequired('#password'),
+        Validator.minLength('#password', 6),
+        Validator.isRequired('#password_confirmation'),
+        Validator.isConfirmed('#password_confirmation', () => {
+          return document.querySelector('#form-1 #password').value
+        }, 'Mật khẩu không trùng khớp'),
+      ],
+      // onSubmit(data) {
+      //   console.log(data);
+      // }
     })
   </script>
 </body>
